@@ -20,17 +20,41 @@ const getProducts = async() => {
     return productData
 }  
 
-const createdProduct = (product) =>{
-    var id = (PRODUCTS.length - 1) + 1
-    console.log("input is:",product)
-    var product = {...product, id:id}
-    PRODUCTS.push(product)
-    return product;
+const createdProduct = (input) =>{
+    // var id = (PRODUCTS.length - 1) + 1
+    // console.log("input is:",product)
+    // var product = {...product, id:id}
+    // PRODUCTS.push(product)
+    // return product;
+    var productBody = {...input}
+    let product = new Product(
+        productBody
+    );
+
+    const res = product.save()
+    if(!res){
+        throw new Error('error')
+    }
+    return res
 }
 const updatedProduct = (id, product) =>{
-    console.log("product:", id, product,  PRODUCTS[id])
-    PRODUCTS[id].name = product.name
-    return product;
+    // console.log("product:", id, product,  PRODUCTS[id])
+    // PRODUCTS[id].name = product.name
+    // return product;
+    var res = Product.findByIdAndUpdate(id, {
+        name: product.name
+    }, {new: true})
+    return res
+}
+const deleteProduct = (id) =>{
+    var res = Product.findByIdAndRemove(id).then(()=>{
+        return "Deleted"
+    }).catch(
+        (error)=>{
+            console.log(error)
+        }     
+    )
+    
 }
 var root = {
     hello: () => {
@@ -48,7 +72,9 @@ var root = {
     updateProduct:({id,input})=>{
         return updatedProduct(id,input)
     },
-    
+    deleteProduct:({id})=>{
+        return deleteProduct(id)
+    }
 };
 
 module.exports =  root;
