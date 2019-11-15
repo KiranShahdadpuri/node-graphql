@@ -1,11 +1,10 @@
-import React, {useState,useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import logo from './logo.svg';
 import './App.css';
 import gql from 'graphql-tag'
-import {useQuery} from '@apollo/react-hooks';
+import {useQuery, useMutation} from '@apollo/react-hooks';
 
-
-const GET_QUERY = gql`
+const GET_QUERY = gql `
 {
   products {
     id,
@@ -14,34 +13,59 @@ const GET_QUERY = gql`
 }
 
 `
+const ADD_Product = gql `
+mutation Mutation($input:ProductInput!){
+  createProduct(
+    input:$input
+  ) {
+    name,
+    id
+  }
+}
+
+`
 function App() {
-  const [products, setProduct] = useState([])
-  const { loading, error, data } = useQuery(GET_QUERY);
-  
-  useEffect(() => {
-    if(data && data.products) {
-      setProduct(data.products);
+    let inputProduct = ''
+    const [products, setProduct] = useState([])
+    const {loading, error, data, refetch} = useQuery(GET_QUERY);
+    // const inputProduct = useRef(null)
+    const [addProductMutation, { addResponse}] = useMutation(ADD_Product);
+    useEffect(() => {
+        console.log("addResponse:",addResponse)
+        if (data && data.products) {
+            setProduct(data.products);
+        }
+    }, [data,products])
+
+    const addProduct = async (node, inputProduct) => {
+      await addProductMutation({
+          variables: {
+              input:{ "name" : inputProduct} 
+          }
+      })
+      node.value = ''
+      refetch()
     }
-  }, [data])
-   
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-   
-  if (error) {
-    console.error(error);
-    return <div>Error!</div>;
-  }
-   
-  return (
-    <div>
-      <ul>
-      {products.map(product => <li key={product.id}>{product.name}</li>)}
-      </ul>
-      
-    </div>
-  )
-  
+
+    if (loading) {
+        return <div>Loading...</div>;
+    }
+
+    if (error) {
+        console.error(error);
+        return <div>Error!</div>;
+    }
+
+    return (
+        <div>
+            <ul>
+                {products.map(product => <li key={product.id}>{product.name}</li>)}
+            </ul>
+            <input type="text" ref={node => inputProduct = node} />
+            <button onClick={() => addProduct(inputProduct, inputProduct.value)}>Add Product</button>
+        </div>
+    )
+
 }
 
 export default App;
